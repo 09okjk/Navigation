@@ -139,14 +139,79 @@ sudo nginx -t
 
 # 重启Nginx
 sudo systemctl restart nginx
+```
 
-# 设置后端服务自动启动（使用PM2）
-sudo npm install -g pm2
-cd /var/www/tools-navigation/server
-pm2 start server.js --name tools-navigation-api
-pm2 startup
-sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $USER --hp $HOME
-pm2 save
+### 设置后端服务自动启动（使用systemctl）
+
+
+1. 创建一个 systemd 服务文件：
+```bash
+sudo nano /etc/systemd/system/tools-navigation-api.service
+```
+
+2. 在文件中添加以下内容：
+
+```ini
+[Unit]
+Description=Tools Navigation API Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /var/www/tools-navigation/server/server.js
+WorkingDirectory=/var/www/tools-navigation/server
+Restart=always
+User=www-data
+Group=www-data
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. 保存并关闭文件后，执行以下命令以启用和启动服务：
+
+```bash
+# 重新加载 systemd 配置
+sudo systemctl daemon-reload
+
+# 启用服务开机启动
+sudo systemctl enable tools-navigation-api
+
+# 启动服务
+sudo systemctl start tools-navigation-api
+```
+
+4. 检查服务状态：
+
+```bash
+sudo systemctl status tools-navigation-api
+```
+
+### 对后续操作的影响
+
+- 使用 `systemctl` 替代 PM2 后，您无需再使用 PM2 的命令（如 `pm2 start`、`pm2 restart` 等）来管理服务。
+- 服务的日志可以通过 `journalctl` 查看，例如：
+
+```bash
+sudo journalctl -u tools-navigation-api
+```
+
+- 如果需要重启服务，可以使用以下命令：
+
+```bash
+sudo systemctl restart tools-navigation-api
+```
+
+- 如果您已经使用 PM2 配置了服务，请确保停止并移除 PM2 管理的服务，以避免冲突：
+
+```bash
+pm2 stop tools-navigation-api
+pm2 delete tools-navigation-api
+pm2 unstartup
+```
+
+通过 `systemctl` 管理服务，您可以更好地与系统的服务管理工具集成，同时减少对第三方工具（如 PM2）的依赖。
 ```
 
 ### 5. 配置防火墙（如果启用）

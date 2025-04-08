@@ -3,7 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 9436;
 
 // 数据文件路径
 const dataFilePath = path.join(__dirname, 'data', 'tools.json');
