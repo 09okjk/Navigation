@@ -81,7 +81,7 @@ sudo apt install -y nginx
 
 ```bash
 # 方法1：使用Git克隆项目
-git clone <您的项目仓库URL> /var/www/tools-navigation
+git clone <您的项目仓库URL> /var/www/html/Navigation
 
 # 方法2：手动上传项目到服务器
 # 使用scp、rsync或其他工具将项目文件上传到服务器
@@ -91,7 +91,7 @@ git clone <您的项目仓库URL> /var/www/tools-navigation
 
 ```bash
 # 进入项目目录
-cd /var/www/tools-navigation
+cd /var/www/html/Navigation
 
 # 安装前端依赖并构建
 npm install
@@ -115,7 +115,7 @@ server {
 
     # 前端静态文件
     location / {
-        root /var/www/tools-navigation/dist;
+        root /var/www/html/Navigation/dist;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
@@ -143,8 +143,8 @@ sudo systemctl restart nginx
 
 ### 设置后端服务自动启动（使用systemctl）
 
-
 1. 创建一个 systemd 服务文件：
+
 ```bash
 sudo nano /etc/systemd/system/tools-navigation-api.service
 ```
@@ -212,6 +212,7 @@ pm2 unstartup
 ```
 
 通过 `systemctl` 管理服务，您可以更好地与系统的服务管理工具集成，同时减少对第三方工具（如 PM2）的依赖。
+
 ```
 
 ### 5. 配置防火墙（如果启用）
@@ -240,7 +241,7 @@ sudo systemctl status certbot.timer
 
 ```bash
 # 进入项目目录
-cd /var/www/tools-navigation
+cd /var/www/html/Navigation
 
 # 拉取最新代码（如果使用Git）
 git pull
@@ -251,8 +252,10 @@ npm run build
 
 # 更新后端
 cd server
+# 添加权限
+sudo chown -R $USER:$USER /var/www/html/Navigation
 npm install
-pm2 restart tools-navigation-api
+sudo systemctl restart tools-navigation-api
 
 # 如果需要，重启Nginx
 sudo systemctl restart nginx
