@@ -46,6 +46,14 @@ npm install
 npm run dev
 ```
 
+启动后，服务器将在端口 9436 上运行，并且可以在局域网内访问。在局域网内的其他设备上，可以使用以下地址访问应用：
+
+```
+http://<服务器局域网IP>:9436
+```
+
+要查找您的局域网IP，可以在命令行中运行 `ipconfig` （Windows）或 `ifconfig` （Linux/Mac）。
+
 ### 构建生产版本
 
 ```bash
@@ -122,7 +130,7 @@ server {
 
     # 后端API代理
     location /api/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:9436;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -157,8 +165,8 @@ Description=Tools Navigation API Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node /var/www/tools-navigation/server/server.js
-WorkingDirectory=/var/www/tools-navigation/server
+ExecStart=/usr/bin/node /var/www/html/Navigation/server/server.js
+WorkingDirectory=/var/www/html/Navigation/server
 Restart=always
 User=www-data
 Group=www-data

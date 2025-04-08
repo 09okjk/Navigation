@@ -97,7 +97,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// 启动服务器
-app.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
+// 启动服务器 - 监听所有网络接口以允许局域网访问
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`服务器运行在端口 ${PORT}`);
+  console.log(`局域网访问地址: http://<本机局域网IP>:${PORT}`);
 });

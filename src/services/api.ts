@@ -10,7 +10,8 @@ interface Tool {
 }
 
 // API base URL - change this to your production server URL when deploying
-const API_URL = 'http://localhost:3000/api';
+// Using window.location.hostname to make it work on any device in the local network
+const API_URL = `http://${window.location.hostname}:9436/api`;
 
 // Get all tools from the server
 export const getTools = async (): Promise<Tool[]> => {
