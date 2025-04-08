@@ -62,6 +62,7 @@
 import { defineComponent, ref, computed, onMounted } from 'vue';
 import ToolCard from './components/ToolCard.vue';
 import ToolForm from './components/ToolForm.vue';
+import { getTools, addTool, updateTool, deleteTool as deleteToolApi } from './services/api';
 
 interface Tool {
   id: string;
@@ -85,11 +86,12 @@ export default defineComponent({
     const isEditing = ref(false);
     const currentTool = ref<Tool | null>(null);
 
-    // 组件挂载时从localStorage加载工具
-    onMounted(() => {
-      const savedTools = localStorage.getItem('tools');
-      if (savedTools) {
-        tools.value = JSON.parse(savedTools);
+    // 组件挂载时从服务器加载工具
+    onMounted(async () => {
+      try {
+        tools.value = await getTools();
+      } catch (error) {
+        console.error('Failed to load tools from server:', error);
       }
     });
 
@@ -105,25 +107,26 @@ export default defineComponent({
       );
     });
 
-    // 保存工具到localStorage
-    const saveToLocalStorage = () => {
-      localStorage.setItem('tools', JSON.stringify(tools.value));
-    };
+    // 不再需要保存到localStorage，数据直接保存到服务器
 
     // 添加或更新工具
-    const saveTool = (tool: Tool) => {
-      if (isEditing.value) {
-        const index = tools.value.findIndex(t => t.id === tool.id);
-        if (index !== -1) {
-          tools.value[index] = tool;
+    const saveTool = async (tool: Tool) => {
+      try {
+        if (isEditing.value) {
+          const updatedTool = await updateTool(tool);
+          const index = tools.value.findIndex(t => t.id === tool.id);
+          if (index !== -1) {
+            tools.value[index] = updatedTool;
+          }
+        } else {
+          const newTool = await addTool(tool);
+          tools.value.push(newTool);
         }
-      } else {
-        tool.id = Date.now().toString();
-        tools.value.push(tool);
+        resetForm();
+      } catch (error) {
+        console.error('Failed to save tool:', error);
+        alert('保存失败，请稍后再试');
       }
-      
-      saveToLocalStorage();
-      resetForm();
     };
 
     // 编辑工具
@@ -134,9 +137,14 @@ export default defineComponent({
     };
 
     // 删除工具
-    const deleteTool = (id: string) => {
-      tools.value = tools.value.filter(tool => tool.id !== id);
-      saveToLocalStorage();
+    const deleteTool = async (id: string) => {
+      try {
+        await deleteToolApi(id);
+        tools.value = tools.value.filter(tool => tool.id !== id);
+      } catch (error) {
+        console.error('Failed to delete tool:', error);
+        alert('删除失败，请稍后再试');
+      }
     };
 
     // 重置表单

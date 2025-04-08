@@ -8,7 +8,7 @@
 - 记录工具名称、描述、维护人、版本号和网址
 - 支持按名称、维护人或描述进行搜索
 - 支持添加、编辑和删除工具
-- 数据保存在浏览器本地存储中，无需后端
+- 数据保存在服务器端，实现多用户数据共享
 - 响应式设计，适配各种屏幕尺寸
 
 ## 技术栈
@@ -17,6 +17,7 @@
 - TypeScript - 类型安全的JavaScript超集
 - Tailwind CSS - 实用优先的CSS框架
 - Vite - 现代前端构建工具
+- Express.js - Node.js Web应用框架（后端）
 
 ## 本地开发
 
@@ -31,9 +32,17 @@
 npm install
 ```
 
-### 启动开发服务器
+### 启动前端开发服务器
 
 ```bash
+npm run dev
+```
+
+### 启动后端服务器
+
+```bash
+cd server
+npm install
 npm run dev
 ```
 
@@ -84,29 +93,41 @@ git clone <您的项目仓库URL> /var/www/tools-navigation
 # 进入项目目录
 cd /var/www/tools-navigation
 
-# 安装依赖
+# 安装前端依赖并构建
 npm install
-
-# 构建生产版本
 npm run build
+
+# 安装后端依赖
+cd server
+npm install
 ```
 
-### 4. 配置Nginx
+### 4. 配置Nginx和启动后端服务
 
 ```bash
 # 创建Nginx配置文件
 sudo nano /etc/nginx/sites-available/tools-navigation
 
-# 添加以下配置
+# 添加以下配置，将前端请求代理到后端服务
 server {
     listen 80;
     server_name your-domain.com; # 替换为您的域名或服务器IP
 
-    root /var/www/tools-navigation/dist;
-    index index.html;
-
+    # 前端静态文件
     location / {
+        root /var/www/tools-navigation/dist;
+        index index.html;
         try_files $uri $uri/ /index.html;
+    }
+
+    # 后端API代理
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
     }
 }
 
@@ -118,6 +139,14 @@ sudo nginx -t
 
 # 重启Nginx
 sudo systemctl restart nginx
+
+# 设置后端服务自动启动（使用PM2）
+sudo npm install -g pm2
+cd /var/www/tools-navigation/server
+pm2 start server.js --name tools-navigation-api
+pm2 startup
+sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $USER --hp $HOME
+pm2 save
 ```
 
 ### 5. 配置防火墙（如果启用）
@@ -151,11 +180,14 @@ cd /var/www/tools-navigation
 # 拉取最新代码（如果使用Git）
 git pull
 
-# 安装依赖
+# 更新前端
 npm install
-
-# 构建新版本
 npm run build
+
+# 更新后端
+cd server
+npm install
+pm2 restart tools-navigation-api
 
 # 如果需要，重启Nginx
 sudo systemctl restart nginx
@@ -165,7 +197,10 @@ sudo systemctl restart nginx
 
 - 如果网站无法访问，检查Nginx状态：`sudo systemctl status nginx`
 - 查看Nginx错误日志：`sudo tail -f /var/log/nginx/error.log`
+- 检查后端API服务状态：`pm2 status tools-navigation-api`
+- 查看后端日志：`pm2 logs tools-navigation-api`
 - 确保防火墙允许HTTP/HTTPS流量：`sudo ufw status`
+- 如果数据无法保存或加载，检查数据文件权限：`ls -la /var/www/tools-navigation/server/data/`
 
 ## 许可证
 
